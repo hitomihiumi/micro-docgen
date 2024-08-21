@@ -61,7 +61,7 @@ export interface Documentation {
     >;
     modules: Record<
         string,
-        {
+        Array<{
             name: string;
             packageVersion: string;
             classes: {
@@ -84,7 +84,7 @@ export interface Documentation {
                 markdown: MarkdownGeneratorMarkdownBuild[];
                 data: DocumentedTypes;
             }[];
-        }
+        }>
     >;
     metadata: DocumentationMetadata;
 }
@@ -232,17 +232,19 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
             if (shouldLog)
                 console.log(`Processing module "${mod.name}" (${i + 1} of ${modules.length})...`);
 
-            doc.modules[mod.name] ??= {
-                classes: [],
-                functions: [],
-                name: mod.name,
-                packageVersion: options.packageVersion,
-                types: [],
-                enum: [],
-                variables: []
-            };
+            doc.modules[mod.name] ??= [
+                {
+                    name: mod.name,
+                    packageVersion: options.packageVersion,
+                    classes: [],
+                    functions: [],
+                    types: [],
+                    enum: [],
+                    variables: []
+                }
+            ];
 
-            const currentModule = doc.modules[mod.name];
+            const currentModule = doc.modules[mod.name][0];
             mod.children?.forEach((child) => {
                 switch (child.kind) {
                     case TypeDoc.ReflectionKind.Class:
@@ -353,7 +355,7 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
             if (shouldFlatten && shouldLog) console.log('Flattening single module...');
 
             for (const moduleIdx in doc.modules) {
-                const module = doc.modules[moduleIdx];
+                const module = doc.modules[moduleIdx][0];
 
                 await Promise.all([
                     ...module.classes.flatMap((cl) => {
