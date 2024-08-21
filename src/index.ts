@@ -37,6 +37,7 @@ export interface MicroDocgenInit {
     debug?: TypeDoc.LogLevel | 'Verbose' | 'Info' | 'Warn' | 'Error' | 'None';
     flattenSingleModule?: boolean;
     clean?: boolean;
+    packageVersion: string;
 }
 
 export interface MicroDocgenCustomFile {
@@ -62,6 +63,7 @@ export interface Documentation {
         string,
         {
             name: string;
+            packageVersion: string;
             classes: {
                 markdown: MarkdownGeneratorMarkdownBuild[];
                 data: DocumentedClass;
@@ -234,6 +236,7 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
                 classes: [],
                 functions: [],
                 name: mod.name,
+                packageVersion: options.packageVersion,
                 types: [],
                 enum: [],
                 variables: []
