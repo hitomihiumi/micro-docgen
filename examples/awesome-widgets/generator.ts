@@ -2,6 +2,7 @@ import { createDocumentation } from '../../src/index';
 
 async function main() {
     const docs = await createDocumentation({
+        packageVersion: '',
         tsconfigPath: './tsconfig.json',
         input: ['./src'],
         markdown: false,

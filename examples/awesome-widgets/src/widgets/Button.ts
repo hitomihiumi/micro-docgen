@@ -1,6 +1,7 @@
 import { Widget } from './Widget';
 
 /**
+ * @example
  * A button widget.
  */
 export class ButtonWidget extends Widget<{

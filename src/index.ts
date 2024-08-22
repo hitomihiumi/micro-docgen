@@ -24,6 +24,7 @@ export interface MicroDocgenInit {
     jsonInputPath?: string | null;
     input?: string[] | null;
     jsonName?: string;
+    name?: string;
     output?: string;
     noEmit?: boolean;
     custom?: MicroDocgenCustomFile[];
@@ -53,39 +54,28 @@ export interface DocumentationMetadata {
 }
 
 export interface Documentation {
-    custom: Record<
-        string,
-        (MicroDocgenCustomFile & {
-            content: string;
-        })[]
-    >;
-    modules: Record<
-        string,
-        Array<{
-            name: string;
-            packageVersion: string;
-            classes: {
-                markdown: MarkdownGeneratorMarkdownBuild[];
-                data: DocumentedClass;
-            }[];
-            types: {
-                markdown: MarkdownGeneratorMarkdownBuild[];
-                data: DocumentedTypes;
-            }[];
-            functions: {
-                markdown: MarkdownGeneratorMarkdownBuild[];
-                data: DocumentedFunction;
-            }[];
-            variables: {
-                markdown: MarkdownGeneratorMarkdownBuild[];
-                data: DocumentedTypes;
-            }[];
-            enum: {
-                markdown: MarkdownGeneratorMarkdownBuild[];
-                data: DocumentedTypes;
-            }[];
-        }>
-    >;
+    name: string;
+    packageVersion: string;
+    classes: {
+        markdown: MarkdownGeneratorMarkdownBuild[];
+        data: DocumentedClass;
+    }[];
+    types: {
+        markdown: MarkdownGeneratorMarkdownBuild[];
+        data: DocumentedTypes;
+    }[];
+    functions: {
+        markdown: MarkdownGeneratorMarkdownBuild[];
+        data: DocumentedFunction;
+    }[];
+    variables: {
+        markdown: MarkdownGeneratorMarkdownBuild[];
+        data: DocumentedTypes;
+    }[];
+    enum: {
+    markdown: MarkdownGeneratorMarkdownBuild[];
+    data: DocumentedTypes;
+    }[];
     metadata: DocumentationMetadata;
 }
 
@@ -141,8 +131,13 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
     }
 
     const doc: Documentation = {
-        custom: {},
-        modules: {},
+        name: options.name || 'Documentation',
+        packageVersion: options.packageVersion,
+        classes: [],
+        functions: [],
+        types: [],
+        variables: [],
+        enum: [],
         metadata: {
             generationMs: 0,
             timestamp: 0
@@ -232,19 +227,7 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
             if (shouldLog)
                 console.log(`Processing module "${mod.name}" (${i + 1} of ${modules.length})...`);
 
-            doc.modules[mod.name] ??= [
-                {
-                    name: mod.name,
-                    packageVersion: options.packageVersion,
-                    classes: [],
-                    functions: [],
-                    types: [],
-                    enum: [],
-                    variables: []
-                }
-            ];
-
-            const currentModule = doc.modules[mod.name][0];
+            const currentModule = doc;
             mod.children?.forEach((child) => {
                 switch (child.kind) {
                     case TypeDoc.ReflectionKind.Class:
@@ -302,23 +285,23 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
         });
     }
 
-    if (Array.isArray(options.custom) && options.custom.length > 0) {
-        if (shouldLog) console.log('Processing custom files...');
-        await Promise.all(
-            options.custom.map(async (m) => {
-                const cat = doc.custom[m.category || 'Custom'];
-                if (!cat) doc.custom[m.category || 'Custom'] = [];
-
-                doc.custom[m.category || 'Custom'].push({
-                    category: m.category || 'Custom',
-                    name: m.name,
-                    path: m.path,
-                    type: m.type,
-                    content: await readFile(m.path, 'utf-8')
-                });
-            })
-        );
-    }
+    //if (Array.isArray(options.custom) && options.custom.length > 0) {
+    //    if (shouldLog) console.log('Processing custom files...');
+    //    await Promise.all(
+    //        options.custom.map(async (m) => {
+    //            const cat = doc.custom[m.category || 'Custom'];
+    //            if (!cat) doc.custom[m.category || 'Custom'] = [];
+    //
+    //            doc.custom[m.category || 'Custom'].push({
+    //                category: m.category || 'Custom',
+    //                name: m.name,
+    //                path: m.path,
+    //                type: m.type,
+    //                content: await readFile(m.path, 'utf-8')
+    //            });
+    //        })
+    //    );
+    //}
 
     doc.metadata = {
         generationMs: performance.now() - start,
@@ -346,7 +329,7 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
 
         if (options.markdown) {
             const shouldFlatten =
-                Object.keys(doc.modules).length === 1 && options.flattenSingleModule;
+                Object.keys(doc).length === 1 && options.flattenSingleModule;
             const createBasePath = (...loc: string[]) => {
                 if (shouldFlatten) loc.pop();
                 return path.join(...loc);
@@ -354,8 +337,7 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
 
             if (shouldFlatten && shouldLog) console.log('Flattening single module...');
 
-            for (const moduleIdx in doc.modules) {
-                const module = doc.modules[moduleIdx][0];
+                const module = doc
 
                 await Promise.all([
                     ...module.classes.flatMap((cl) => {
@@ -459,32 +441,31 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
                         });
                     })
                 ]);
-            }
 
-            for (const fileIdx in doc.custom) {
-                const file = doc.custom[fileIdx];
-
-                await Promise.all(
-                    file.map(async (m) => {
-                        const catPath = path.join(options.output!, path.normalize(m.category));
-
-                        if (shouldLog)
-                            console.log(
-                                `Writing custom file ${m.name}${m.type || path.extname(m.path)}`
-                            );
-
-                        if (!existsSync(catPath))
-                            await mkdir(catPath, {
-                                recursive: true
-                            });
-
-                        await writeFile(
-                            path.join(catPath, `${m.name}${m.type || path.extname(m.path)}`),
-                            m.content
-                        );
-                    })
-                );
-            }
+            //for (const fileIdx in doc.custom) {
+            //    const file = doc.custom[fileIdx];
+            //
+            //    await Promise.all(
+            //        file.map(async (m) => {
+            //            const catPath = path.join(options.output!, path.normalize(m.category));
+            //
+            //            if (shouldLog)
+            //                console.log(
+            //                    `Writing custom file ${m.name}${m.type || path.extname(m.path)}`
+            //                );
+            //
+            //            if (!existsSync(catPath))
+            //                await mkdir(catPath, {
+            //                    recursive: true
+            //                });
+            //
+            //            await writeFile(
+            //                path.join(catPath, `${m.name}${m.type || path.extname(m.path)}`),
+            //                m.content
+            //            );
+            //        })
+            //    );
+            //}
         }
     }
 

@@ -1,5 +1,5 @@
 {
-  "name": "micro-docgen",
+  "name": "@hitomihiumi/micro-docgen",
   "version": "0.2.0",
   "description": "Quick and easy documentation for typescript projects.",
   "main": "./dist/index.js",
@@ -12,12 +12,11 @@
     "docs": "tsx ./scripts/generate.ts",
     "example:md": "cd ./examples/markdown && tsx generator.ts",
     "example:json": "cd ./examples/awesome-widgets && tsx generator.ts",
-    "build": "tsc",
-    "prepublishOnly": "yarn build && yarn docs"
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/neplextech/micro-docgen.git"
+    "url": "git+https://github.com/hitomihiumi/micro-docgen.git"
   },
   "keywords": [
     "docgen",
@@ -32,9 +31,9 @@
   "author": "twlite <hello@twlite.dev>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/neplextech/micro-docgen/issues"
+    "url": "https://github.com/hitomihiumi/micro-docgen/issues"
   },
-  "homepage": "https://github.com/neplextech/micro-docgen#readme",
+  "homepage": "https://github.com/hitomihiumi/micro-docgen#readme",
   "packageManager": "yarn@4.0.2",
   "dependencies": {
     "common-tags": "^1.8.2",
