@@ -38,7 +38,7 @@ export interface MicroDocgenInit {
     debug?: TypeDoc.LogLevel | 'Verbose' | 'Info' | 'Warn' | 'Error' | 'None';
     flattenSingleModule?: boolean;
     clean?: boolean;
-    packageVersion: string;
+    version: string;
 }
 
 export interface MicroDocgenCustomFile {
@@ -55,7 +55,14 @@ export interface DocumentationMetadata {
 
 export interface Documentation {
     name: string;
-    packageVersion: string;
+    version: string;
+    github?: string;
+    custom: Record<
+        string,
+        (MicroDocgenCustomFile & {
+            content: string;
+        })[]
+    >;
     classes: {
         markdown: MarkdownGeneratorMarkdownBuild[];
         data: DocumentedClass;
@@ -68,13 +75,17 @@ export interface Documentation {
         markdown: MarkdownGeneratorMarkdownBuild[];
         data: DocumentedFunction;
     }[];
+    interfaces: {
+        markdown: MarkdownGeneratorMarkdownBuild[];
+        data: DocumentedTypes;
+    }[];
     variables: {
         markdown: MarkdownGeneratorMarkdownBuild[];
         data: DocumentedTypes;
     }[];
     enum: {
-    markdown: MarkdownGeneratorMarkdownBuild[];
-    data: DocumentedTypes;
+        markdown: MarkdownGeneratorMarkdownBuild[];
+        data: DocumentedTypes;
     }[];
     metadata: DocumentationMetadata;
 }
@@ -132,9 +143,11 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
 
     const doc: Documentation = {
         name: options.name || 'Documentation',
-        packageVersion: options.packageVersion,
+        version: options.version,
+        custom: {},
         classes: [],
         functions: [],
+        interfaces: [],
         types: [],
         variables: [],
         enum: [],
@@ -255,7 +268,9 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
                                     ? currentModule.enum
                                     : TypeDoc.ReflectionKind.Variable === child.kind
                                       ? currentModule.variables
-                                      : currentModule.types;
+                                      : TypeDoc.ReflectionKind.Interface === child.kind
+                                        ? currentModule.interfaces
+                                            : currentModule.types;
 
                             dest.push({
                                 data: serialized,
@@ -285,23 +300,23 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
         });
     }
 
-    //if (Array.isArray(options.custom) && options.custom.length > 0) {
-    //    if (shouldLog) console.log('Processing custom files...');
-    //    await Promise.all(
-    //        options.custom.map(async (m) => {
-    //            const cat = doc.custom[m.category || 'Custom'];
-    //            if (!cat) doc.custom[m.category || 'Custom'] = [];
-    //
-    //            doc.custom[m.category || 'Custom'].push({
-    //                category: m.category || 'Custom',
-    //                name: m.name,
-    //                path: m.path,
-    //                type: m.type,
-    //                content: await readFile(m.path, 'utf-8')
-    //            });
-    //        })
-    //    );
-    //}
+    if (Array.isArray(options.custom) && options.custom.length > 0) {
+        if (shouldLog) console.log('Processing custom files...');
+        await Promise.all(
+            options.custom.map(async (m) => {
+                const cat = doc.custom[m.category || 'Custom'];
+                if (!cat) doc.custom[m.category || 'Custom'] = [];
+
+                doc.custom[m.category || 'Custom'].push({
+                    category: m.category || 'Custom',
+                    name: m.name,
+                    path: m.path,
+                    type: m.type,
+                    content: await readFile(m.path, 'utf-8')
+                });
+            })
+        );
+    }
 
     doc.metadata = {
         generationMs: performance.now() - start,
@@ -315,7 +330,7 @@ export async function createDocumentation(options: MicroDocgenInit): Promise<Doc
         const outputExists = existsSync(options.output);
 
         if (options.clean && outputExists) {
-            await rm(options.output, {
+            await rm(options.output + options.jsonName, {
                 recursive: true,
                 force: true
             });

@@ -2,7 +2,8 @@ import { createDocumentation } from '../../src/index';
 
 async function main() {
     const docs = await createDocumentation({
-        packageVersion: '',
+        version: '1.0.0',
+        name: 'Awesome Widgets',
         tsconfigPath: './tsconfig.json',
         input: ['./src'],
         markdown: false,

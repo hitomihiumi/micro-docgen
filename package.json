@@ -1,6 +1,6 @@
 {
   "name": "@hitomihiumi/micro-docgen",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Quick and easy documentation for typescript projects.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,7 +28,7 @@
     "json",
     "typedoc"
   ],
-  "author": "twlite <hello@twlite.dev>",
+  "author": "hitomihiumi, twlite <hello@twlite.dev>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/hitomihiumi/micro-docgen/issues"

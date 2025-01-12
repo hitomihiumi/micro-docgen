@@ -1,23 +1,25 @@
-# micro-docgen
+# micro-docgen (Forked)
+
+[![npm version](https://badge.fury.io/js/%40hitomihiumi%2Fmicro-docgen.svg)](https://badge.fury.io/js/%40hitomihiumi%2Fmicro-docgen)
+
+[![downloads](https://img.shields.io/npm/dm/%40hitomihiumi%2Fmicro-docgen.svg)](https://www.npmjs.com/package/%40hitomihiumi%2Fmicro-docgen)
 
 TypeScript documentation generator on steroids 💉. MicroDocgen is built on top of typedoc to leverage its power and add more features.
 
 ## TODO
 
--   Static site generation
--   More options
--   CLI
+-   Update to 0.3.0 original version
 
 ## Installation
 
 ```sh
-$ npm install micro-docgen
+$ npm install @hitomihiumi/micro-docgen
 ```
 
 ## Usage
 
 ```js
-import { createDocumentation } from 'micro-docgen';
+import { createDocumentation } from '@hitomihiumi/micro-docgen';
 
 await createDocumentation({
     // source files
