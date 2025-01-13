@@ -19,12 +19,32 @@ export interface MarkdownGeneratorMarkdownBuild {
 export interface MarkdownGeneratorMdBuilderOptions {
     linker: (t: string, s: string[]) => string;
     links: MicroDocgenLink;
+    includeHeaders: boolean;
 }
 
+const escapeMultiLine = (src: string) => src.replace(/\n|\r/g, ' ');
+
+/**
+ * MarkdownGenerator is a class that generates markdown documentation for classes, functions, and types.
+ * It transforms the JSON output from the serializer into markdown and applies the necessary formatting or linking.
+ */
 export class MarkdownGenerator {
     public linker: typeof this.options.linker;
+
     public constructor(public options: MarkdownGeneratorMdBuilderOptions) {
         this.linker = this.options.linker;
+    }
+
+    public getHeaders(value: DocumentedClass | DocumentedTypes | DocumentedFunction) {
+        const headers = [
+            '---',
+            `title: ${escapeMultiLine(escape(value.name))}`,
+            `description: ${escapeMultiLine(escape(value.description || 'No description provided'))}`,
+            '---',
+            ''
+        ];
+
+        return headers.join('\n');
     }
 
     public getClassHeading(c: DocumentedClass) {
@@ -39,7 +59,7 @@ export class MarkdownGenerator {
         if (!c) return '';
 
         const ctor = codeBlock(
-            `${escape(c.constructor)}(${c.parameters
+            `new ${escape(c.constructor)}(${c.parameters
                 .filter((p) => !p.name.includes('.'))
                 .map((m) => m.name)
                 .join(', ')})`,
@@ -99,49 +119,61 @@ export class MarkdownGenerator {
     }
 
     public getTypeMarkdown(t: DocumentedTypes) {
-        return [
+        const md = [
             heading(escape(t.name), 2),
             t.description ? '\n' + t.description : '',
             t.deprecated ? `\n- ${bold('⚠️ Deprecated')}` : '',
             t.properties.length
                 ? (() => {
-                      const tableHead = ['Property', 'Type', 'Value'];
-                      if (
-                          t.properties.some((p) => p.description && p.description.trim().length > 0)
-                      )
-                          tableHead.push('Description');
-                      const tableBody = t.properties.map((n) => {
-                          const params = [
-                              escape(n.name),
-                              this.linker(n.type || 'any', [n.type || 'any']),
-                              escape(n.value || 'N/A')
-                          ];
+                    const tableHead = ['Property', 'Type', 'Value'];
+                    if (
+                        t.properties.some((p) => p.description && p.description.trim().length > 0)
+                    )
+                        tableHead.push('Description');
+                    const tableBody = t.properties.map((n) => {
+                        const params = [
+                            escape(n.name),
+                            this.linker(n.type || 'any', [n.type || 'any']),
+                            escape(n.value || 'N/A')
+                        ];
 
-                          if (tableHead.includes('Description'))
-                              params.push(n.description || 'N/A');
+                        if (tableHead.includes('Description'))
+                            params.push(n.description || 'N/A');
 
-                          return params;
-                      });
+                        return params;
+                    });
 
-                      return `\n${table(tableHead, tableBody)}\n`;
-                  })()
+                    return `\n${table(tableHead, tableBody)}\n`;
+                })()
                 : t.type
-                  ? `\n- Type: ${this.linker(t.type, [t.type])}`
-                  : '',
+                    ? `\n- Type: ${this.linker(t.type, [t.type])}`
+                    : '',
             t.metadata?.url ? `\n- ${hyperlink('Source', t.metadata.url)}` : ''
-        ]
+        ];
+
+        if (this.options.includeHeaders) {
+            md.unshift(this.getHeaders(t));
+        }
+
+        return md
             .filter((r) => r.length > 0)
             .join('\n')
             .trim();
     }
 
     public getMarkdown(c: DocumentedClass) {
-        return [
+        const md = [
             this.getClassHeading(c),
             this.getCtor(c.constructor!),
             this.getProperties(c.properties),
             this.getMethods(c.methods)
-        ].join('\n\n');
+        ];
+
+        if (this.options.includeHeaders) {
+            md.unshift(this.getHeaders(c));
+        }
+
+        return md.join('\n\n');
     }
 
     public getProperties(properties: DocumentedClassProperty[]) {
@@ -197,36 +229,36 @@ export class MarkdownGenerator {
                 m.deprecated ? `\n- ${bold('⚠️ Deprecated')}` : '',
                 m.examples
                     ? '\n' +
-                      m.examples
-                          .map((m) => (m.includes('```') ? m : codeBlock(m, 'typescript')))
-                          .join('\n\n')
+                    m.examples
+                        .map((m) => (m.includes('```') ? m : codeBlock(m, 'typescript')))
+                        .join('\n\n')
                     : '',
                 m.parameters.length
                     ? (() => {
-                          const tableHead = ['Parameter', 'Type', 'Optional'];
-                          if (
-                              m.parameters.some(
-                                  (p) => p.description && p.description.trim().length > 0
-                              )
-                          )
-                              tableHead.push('Description');
-                          const tableBody = m.parameters.map((n) => {
-                              const params = [
-                                  n.default
-                                      ? `${escape(n.name)}=${code(escape(n.default))}`
-                                      : escape(n.name),
-                                  this.linker(n.type || 'any', n.rawType || ['any']),
-                                  n.optional ? '✅' : '❌'
-                              ];
+                        const tableHead = ['Parameter', 'Type', 'Optional'];
+                        if (
+                            m.parameters.some(
+                                (p) => p.description && p.description.trim().length > 0
+                            )
+                        )
+                            tableHead.push('Description');
+                        const tableBody = m.parameters.map((n) => {
+                            const params = [
+                                n.default
+                                    ? `${escape(n.name)}=${code(escape(n.default))}`
+                                    : escape(n.name),
+                                this.linker(n.type || 'any', n.rawType || ['any']),
+                                n.optional ? '✅' : '❌'
+                            ];
 
-                              if (tableHead.includes('Description'))
-                                  params.push(n.description || 'N/A');
+                            if (tableHead.includes('Description'))
+                                params.push(n.description || 'N/A');
 
-                              return params;
-                          });
+                            return params;
+                        });
 
-                          return `\n${table(tableHead, tableBody)}\n`;
-                      })()
+                        return `\n${table(tableHead, tableBody)}\n`;
+                    })()
                     : '',
                 m.metadata?.url ? `\n- ${hyperlink('Source', m.metadata.url)}` : ''
             ]
@@ -260,34 +292,34 @@ export class MarkdownGenerator {
             m.deprecated ? `\n- ${bold('⚠️ Deprecated')}` : '',
             m.examples
                 ? '\n' +
-                  m.examples
-                      .map((m) => (m.includes('```') ? m : codeBlock(m, 'typescript')))
-                      .join('\n\n')
+                m.examples
+                    .map((m) => (m.includes('```') ? m : codeBlock(m, 'typescript')))
+                    .join('\n\n')
                 : '',
             m.parameters.length
                 ? (() => {
-                      const tableHead = ['Parameter', 'Type', 'Optional'];
-                      if (
-                          m.parameters.some((p) => p.description && p.description.trim().length > 0)
-                      )
-                          tableHead.push('Description');
-                      const tableBody = m.parameters.map((n) => {
-                          const params = [
-                              n.default
-                                  ? `${escape(n.name)}=${code(escape(n.default))}`
-                                  : escape(n.name),
-                              this.linker(n.type || 'any', n.rawType || ['any']),
-                              n.optional ? '✅' : '❌'
-                          ];
+                    const tableHead = ['Parameter', 'Type', 'Optional'];
+                    if (
+                        m.parameters.some((p) => p.description && p.description.trim().length > 0)
+                    )
+                        tableHead.push('Description');
+                    const tableBody = m.parameters.map((n) => {
+                        const params = [
+                            n.default
+                                ? `${escape(n.name)}=${code(escape(n.default))}`
+                                : escape(n.name),
+                            this.linker(n.type || 'any', n.rawType || ['any']),
+                            n.optional ? '✅' : '❌'
+                        ];
 
-                          if (tableHead.includes('Description'))
-                              params.push(n.description || 'N/A');
+                        if (tableHead.includes('Description'))
+                            params.push(n.description || 'N/A');
 
-                          return params;
-                      });
+                        return params;
+                    });
 
-                      return `\n${table(tableHead, tableBody)}\n`;
-                  })()
+                    return `\n${table(tableHead, tableBody)}\n`;
+                })()
                 : '',
             m.metadata?.url ? `\n- ${hyperlink('Source', m.metadata.url)}` : ''
         ]
@@ -295,6 +327,12 @@ export class MarkdownGenerator {
             .join('\n')
             .trim();
 
-        return `${title}\n${desc}`;
+        const md = [title, desc];
+
+        if (this.options.includeHeaders) {
+            md.unshift(this.getHeaders(m));
+        }
+
+        return md.join('\n\n');
     }
 }

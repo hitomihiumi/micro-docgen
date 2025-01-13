@@ -1,7 +1,9 @@
-import { createDocumentation } from '../../src/index';
+import { createDocumentation } from '../../src/docs';
 
 async function main() {
     const docs = await createDocumentation({
+        name: 'Markdown Example',
+        version: '1.0.0',
         tsconfigPath: './tsconfig.json',
         input: ['./lib'],
         markdown: true,

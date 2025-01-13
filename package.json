@@ -1,18 +1,24 @@
 {
   "name": "@hitomihiumi/micro-docgen",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Quick and easy documentation for typescript projects.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
+  "bin": {
+    "docgen": "./bin/index.js",
+    "micro-docgen": "./bin/index.js"
+  },
   "scripts": {
     "format": "prettier --write \"./{src,examples,docs,scripts}/**/*.{js,ts,md,mdx}\"",
     "docs": "tsx ./scripts/generate.ts",
     "example:md": "cd ./examples/markdown && tsx generator.ts",
     "example:json": "cd ./examples/awesome-widgets && tsx generator.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "yarn build && yarn docs"
   },
   "repository": {
     "type": "git",
@@ -34,8 +40,9 @@
     "url": "https://github.com/hitomihiumi/micro-docgen/issues"
   },
   "homepage": "https://github.com/hitomihiumi/micro-docgen#readme",
-  "packageManager": "yarn@4.0.2",
+  "packageManager": "yarn@4.5.3",
   "dependencies": {
+    "commander": "^12.1.0",
     "common-tags": "^1.8.2",
     "tmp": "^0.2.1",
     "typedoc": "^0.25.4",

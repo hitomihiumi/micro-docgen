@@ -6,9 +6,7 @@
 
 TypeScript documentation generator on steroids 💉. MicroDocgen is built on top of typedoc to leverage its power and add more features.
 
-## TODO
-
--   Update to 0.3.0 original version
+[Link to the original repository](https://github.com/neplextech/micro-docgen/tree/main)
 
 ## Installation
 
@@ -20,8 +18,17 @@ $ npm install @hitomihiumi/micro-docgen
 
 ```js
 import { createDocumentation } from '@hitomihiumi/micro-docgen';
+import { name, version } from './package.json'; 
+/* 
+    ^
+    | --- To use this, make sure you have the “resolveJsonModule” flag set to “true” inside your tsconfig.json
+*/
 
 await createDocumentation({
+    // project name
+    name,
+    // project version
+    version,
     // source files
     input: ['src'],
     // output directory

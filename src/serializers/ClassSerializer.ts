@@ -67,15 +67,11 @@ export interface DocumentedClassMethod {
 
 export class ClassSerializer extends AbstractSerializer {
     public serialize(): DocumentedClass {
-        const ctor = this.declaration.children?.find((c) => {
-            return c.kind === ReflectionKind.Constructor;
-        });
-        const properties = this.declaration.children?.filter((c) => {
-            return c.kind === ReflectionKind.Property || c.kind === ReflectionKind.Accessor;
-        });
-        const methods = this.declaration.children?.filter((c) => {
-            return c.kind === ReflectionKind.Method;
-        });
+        const ctor = this.declaration.children?.find((c) => c.kind === ReflectionKind.Constructor);
+        const properties = this.declaration.children?.filter(
+            (c) => c.kind === ReflectionKind.Property || c.kind === ReflectionKind.Accessor
+        );
+        const methods = this.declaration.children?.filter((c) => c.kind === ReflectionKind.Method);
 
         const ctorSig = ctor?.signatures?.find(
             (r) => r.kind === ReflectionKind.ConstructorSignature
@@ -88,14 +84,14 @@ export class ClassSerializer extends AbstractSerializer {
                 !!this.declaration.comment?.blockTags?.some((r) => r.tag === '@abstract'),
             constructor: ctor
                 ? {
-                      ...this.parseMethod(ctor),
-                      name: (ctorSig?.type as any)?.name || this.declaration.name || ctor.name,
-                      constructor:
-                          ctorSig?.name ||
-                          `new ${
-                              (ctorSig?.type as any)?.name || this.declaration.name || ctor.name
-                          }`
-                  }
+                    ...this.parseMethod(ctor),
+                    name: (ctorSig?.type as any)?.name || this.declaration.name || ctor.name,
+                    constructor:
+                        ctorSig?.name ||
+                        `new ${
+                            (ctorSig?.type as any)?.name || this.declaration.name || ctor.name
+                        }`
+                }
                 : null,
             metadata: getFileMetadata(this.declaration),
             deprecated: !!this.declaration.comment?.blockTags?.some((r) => r.tag === '@deprecated'),
